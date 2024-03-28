@@ -4,8 +4,6 @@ namespace ATM_app
 	public class ATM
 	{
 		private List<Card> cards = new();
-		private List<Card> blockedCards = new();
-
 
         Card currentCard = null;
 		
@@ -36,6 +34,13 @@ namespace ATM_app
 			while (!currentCard.PinIsRight(Console.ReadLine()))
 				Console.WriteLine("Incorrect PIN. Try again");
 
+			if (currentCard.IsBlocked)
+			{
+				Console.WriteLine("Card is blocked.");
+				WithdrawCard();
+				return;
+			}
+
 			OperateWithCard();
 		}
 
@@ -46,7 +51,7 @@ namespace ATM_app
 				Console.WriteLine();
 				Console.WriteLine("What would you want to do?");
 				Console.WriteLine("Withdraw money (type 1)");
-				Console.WriteLine("Deposit money (tyoe 2)");
+				Console.WriteLine("Deposit money (type 2)");
 				Console.WriteLine("Pay bills (type 3)");
 				Console.WriteLine("Show balance (type 4)");
 				Console.WriteLine("------------------------");
@@ -62,23 +67,42 @@ namespace ATM_app
 						amt = Convert.ToDecimal(Console.ReadLine());
 						currentCard.WithdrawMoney(amt);
 						break;
+
 					case "2":
-						Console.Write("How much would you like to deposit?");
+						Console.Write("How much would you like to deposit? ");
 						amt = Convert.ToDecimal(Console.ReadLine());
 						currentCard.DepositMoney(amt);
 						break;
+
 					case "3":
+						if (currentCard.Bills.Count == 0)
+							Console.WriteLine("You have paid all bills");
+						else
+						{
+							Console.WriteLine("Which one do you want to pay? (type index)");
+							currentCard.ShowBills();
+							var ans = Console.ReadLine();
+							if (int.TryParse(ans, out int result) && result > 0 && result <= currentCard.Bills.Count)
+								currentCard.PayBills(result);
+							else
+								Console.WriteLine("invalid index");
+						}
 						break;
+
 					case "4":
 						currentCard.ShowBalance();
 						break;
+
 					case "5":
 						WithdrawCard();
 						break;
+
 					case "6":
 						BlockCard();
 						break;
+
 					default:
+						Console.WriteLine("Invalid option");
 						break;
 				}
 				if (answer == "5" || answer == "6")
@@ -101,9 +125,7 @@ namespace ATM_app
 
 		public void BlockCard()
 		{
-			blockedCards.Add(currentCard);
-			cards.Remove(currentCard);
-			
+			currentCard.IsBlocked = true;
 			Console.WriteLine("Blocked card.");
 			WithdrawCard();
 		}
